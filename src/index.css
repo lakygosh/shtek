@@ -1,0 +1,375 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #121010;
+  color: #e8e4de;
+  -webkit-font-smoothing: antialiased;
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: #8FB996;
+  color: #121010;
+}
+
+input, select, button {
+  font-family: inherit;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0.3;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+/* ── Shared nav button styles ── */
+.nav-btn {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Mobile bottom nav ── */
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  background: #1a1714;
+  border-top: 1px solid #2a2520;
+  padding: 4px 0 env(safe-area-inset-bottom, 4px);
+}
+
+.mobile-nav .nav-btn {
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 4px;
+  justify-content: center;
+}
+
+.mobile-nav .nav-icon { font-size: 18px; line-height: 1; }
+.mobile-nav .nav-label { font-size: 10px; }
+
+/* ── Desktop top tabs ── */
+.desktop-nav {
+  display: none;
+}
+
+.desktop-nav .nav-btn {
+  flex-direction: row;
+  gap: 5px;
+  padding: 10px 14px;
+  border-bottom: 2px solid transparent;
+}
+
+.desktop-nav .nav-icon { font-size: 14px; }
+.desktop-nav .nav-label { font-size: 13px; }
+
+@media (min-width: 768px) {
+  .mobile-nav { display: none; }
+  .desktop-nav { display: flex; }
+}
+
+/* ── Page container ── */
+.page-content {
+  padding: 16px;
+  padding-bottom: 80px; /* space for bottom nav */
+  max-width: 1100px;
+}
+
+@media (min-width: 768px) {
+  .page-content {
+    padding: 24px 28px;
+    padding-bottom: 24px;
+  }
+}
+
+/* ── Stats grid ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+@media (min-width: 768px) {
+  .stats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: space-around;
+  }
+}
+
+/* ── Dashboard 2-col grid ── */
+.dash-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+
+/* ── Input groups ── */
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .input-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+}
+
+/* ── Daily log layout ── */
+.daily-split {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .daily-split {
+    flex-direction: row;
+    gap: 20px;
+  }
+
+  .daily-split .daily-chart {
+    flex: 0 0 220px;
+  }
+
+  .daily-split .daily-list {
+    flex: 1;
+    min-width: 280px;
+  }
+}
+
+/* ── Expense card list (mobile) / table (desktop) ── */
+.expense-table-wrap {
+  display: none;
+}
+
+.expense-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .expense-table-wrap {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .expense-cards {
+    display: none;
+  }
+}
+
+/* ── Quick add form ── */
+.quick-add {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.quick-add .qa-desc {
+  grid-column: 1 / -1;
+}
+
+.quick-add .qa-btn {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 768px) {
+  .quick-add {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .quick-add .qa-desc {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .quick-add .qa-btn {
+    flex: none;
+  }
+}
+
+/* ── Charts area ── */
+.charts-area {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .charts-area {
+    flex-direction: row;
+    gap: 24px;
+    align-items: flex-start;
+  }
+}
+
+/* ── Goals grid ── */
+.goals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .goals-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+}
+
+.goal-card {
+  display: flex;
+  flex-direction: column;
+  background: #1a1714;
+  border: 1px solid #2a2520;
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  font-family: inherit;
+  color: inherit;
+}
+
+.goal-card:hover {
+  border-color: #444;
+  background: #1e1b17;
+}
+
+.goal-card-new {
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-style: dashed;
+  min-height: 120px;
+}
+
+.goal-card-new:hover {
+  border-color: #8FB996;
+}
+
+.goal-template-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: #1a1714;
+  border: 1px solid #2a2520;
+  border-radius: 12px;
+  padding: 18px 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+  font-family: inherit;
+  color: inherit;
+}
+
+.goal-template-card:hover {
+  border-color: #8FB996;
+  background: #1e1b17;
+}
+
+/* ── Tutorial overlay ── */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: tutorialFadeIn 0.25s ease;
+}
+
+.tutorial-card {
+  background: #1a1714;
+  border: 1px solid #2a2520;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: tutorialSlideUp 0.3s ease;
+}
+
+@keyframes tutorialFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes tutorialSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Header ── */
+.app-header {
+  padding: 16px 16px 0;
+  border-bottom: 1px solid #1e1a16;
+}
+
+.app-header .header-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.app-header .header-email {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .app-header {
+    padding: 24px 28px 0;
+  }
+
+  .app-header .header-email {
+    display: inline;
+  }
+}
