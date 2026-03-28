@@ -22,8 +22,7 @@ function ExpenseCard({ item, onChange, onDelete, catNames, catColors }) {
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ width: 10, height: 10, borderRadius: 3, background: catColors[item.category], flexShrink: 0 }} />
-        <input value={item.name} onChange={e => onChange({ ...item, name: e.target.value })} placeholder="Expense name…"
-          style={{ background: "transparent", border: "none", color: "#e8e4de", fontSize: 15, fontWeight: 500, outline: "none", flex: 1, minWidth: 0, padding: 0 }} />
+        <span style={{ color: "#e8e4de", fontSize: 15, fontWeight: 500, flex: 1 }}>{item.category}</span>
         <button onClick={onDelete}
           style={{ background: "none", border: "none", color: "#553333", cursor: "pointer", fontSize: 18, padding: "4px 6px", borderRadius: 4, lineHeight: 1, flexShrink: 0 }}>×</button>
       </div>
@@ -86,10 +85,6 @@ function DragRow({ item, index, onChange, onDelete, dragState, onDragStart, onDr
         transition: "opacity 0.15s",
       }}>
       <td style={{ padding: "7px 2px", width: 28, color: "#444", fontSize: 16, textAlign: "center", cursor: "grab", userSelect: "none", lineHeight: 1 }}>⠿</td>
-      <td style={{ padding: "7px 8px" }}>
-        <input value={item.name} onChange={e => onChange({ ...item, name: e.target.value })} placeholder="Expense name…"
-          style={{ ...inputBase, fontWeight: 500 }} />
-      </td>
       <td style={{ padding: "7px 4px" }}>
         <select value={item.category} onChange={e => onChange({ ...item, category: e.target.value })} style={selBase}>{catNames.map(c => <option key={c} value={c}>{c}</option>)}</select>
       </td>
@@ -188,7 +183,7 @@ export default function ExpenseTable({ items, setItems, catNames, catColors }) {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: "2px solid #333", textAlign: "left" }}>
-              {["", "Expense", "Category", "Priority", "Amount (€)", "Frequency", "Monthly", "Annual", "Notes", ""].map((h, i) => (
+              {["", "Category", "Priority", "Amount (€)", "Frequency", "Monthly", "Annual", "Notes", ""].map((h, i) => (
                 <th key={i} style={{ padding: "8px 8px 8px 4px", color: "#666", fontWeight: 500, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>{h}</th>
               ))}
             </tr>

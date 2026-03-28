@@ -1,7 +1,7 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { monthCost, buildCategories, getCatNames, getCatColors } from "./data/constants";
 import { useAuth } from "./hooks/useAuth";
-import { useSettings, useExpenses, useDailyEntries, useGoals, useFeedback } from "./hooks/useSupabaseData";
+import { useSettings, useExpenses, useDailyEntries, useGoals, useFeedback, seedDefaultData } from "./hooks/useSupabaseData";
 import { NumberInput, Card, StatBox } from "./components/ui";
 import DonutChart from "./components/DonutChart";
 import ExpenseTable from "./components/ExpenseTable";
@@ -12,6 +12,7 @@ import GoalsTab from "./components/GoalsTab";
 import Tutorial from "./components/Tutorial";
 import FeedbackForm from "./components/FeedbackForm";
 import AdminReports from "./components/AdminReports";
+import ImportModal from "./components/ImportModal";
 
 const ADMIN_EMAIL = "lazar22.gosic@gmail.com";
 import { getTemplate } from "./data/goalTemplates";
@@ -171,15 +172,30 @@ function AppContent({ user, onSignOut }) {
   const [tab, setTab] = useState("dashboard");
   const [showTutorial, setShowTutorial] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const isAdmin = user.email === ADMIN_EMAIL;
   const { settings, loading: settingsLoading, update: updateSettings } = useSettings(user.id);
   const { items: expenses, loading: expLoading, setItems: setExpenses } = useExpenses(user.id, false);
   const { items: idealExpenses, loading: idealLoading, setItems: setIdealExpenses } = useExpenses(user.id, true);
-  const { entries: dailyEntries, loading: dailyLoading, addEntry, updateEntry, deleteEntry } = useDailyEntries(user.id);
-  const { goals, loading: goalsLoading, addGoal, updateGoal, deleteGoal } = useGoals(user.id);
+  const { entries: dailyEntries, loading: dailyLoading, addEntry, bulkAddEntries, updateEntry, deleteEntry } = useDailyEntries(user.id);
+  const { goals, loading: goalsLoading, addGoal, bulkAddGoals, updateGoal, deleteGoal } = useGoals(user.id);
   const { items: feedbackItems, loading: feedbackLoading, addFeedback, updateFeedback, deleteFeedback } = useFeedback(user.id, isAdmin);
 
   const loading = settingsLoading || expLoading || idealLoading || dailyLoading || goalsLoading || feedbackLoading;
+
+  // Seed defaults for brand-new users (all sections empty)
+  const [seeding, setSeeding] = useState(false);
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (loading || seeded.current || seeding) return;
+    const isEmpty = expenses.length === 0 && idealExpenses.length === 0 && goals.length === 0 && dailyEntries.length === 0;
+    if (!isEmpty) return;
+    seeded.current = true;
+    setSeeding(true);
+    seedDefaultData(user.id).then(() => {
+      window.location.reload();
+    });
+  }, [loading, expenses, idealExpenses, goals, dailyEntries, user.id, seeding]);
 
   // Build categories from defaults + user's custom ones, minus hidden defaults
   const customCategories = settings?.custom_categories || [];
@@ -196,10 +212,10 @@ function AppContent({ user, onSignOut }) {
     updateSettings({ hidden_categories: newHidden });
   }, [updateSettings]);
 
-  if (loading || !settings) {
+  if (loading || !settings || seeding) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", color: "#888", fontSize: 14 }}>
-        Loading your data...
+        {seeding ? "Setting up your account with sample data..." : "Loading your data..."}
       </div>
     );
   }
@@ -228,6 +244,10 @@ function AppContent({ user, onSignOut }) {
           <span style={{ fontSize: 18, fontWeight: 600, color: "#e8e4de", letterSpacing: "-0.5px" }}>Money Planner</span>
           <div style={{ flex: 1 }} />
           <span className="header-email" style={{ fontSize: 12, color: "#666", marginRight: 4 }}>{user.email}</span>
+          <button onClick={() => setShowImport(true)} style={{
+            background: "#2a2520", border: "1px solid #B8C5E3", borderRadius: 6,
+            padding: "6px 12px", color: "#B8C5E3", fontSize: 12, cursor: "pointer",
+          }}>Import</button>
           <button onClick={() => setShowFeedback(true)} style={{
             background: "#2a2520", border: "1px solid #D4C5A9", borderRadius: 6,
             padding: "6px 12px", color: "#D4C5A9", fontSize: 12, cursor: "pointer",
@@ -323,6 +343,17 @@ function AppContent({ user, onSignOut }) {
 
       {showTutorial && (
         <Tutorial onClose={() => setShowTutorial(false)} onNavigate={setTab} />
+      )}
+
+      {showImport && (
+        <ImportModal
+          onClose={() => setShowImport(false)}
+          onImportExpenses={setExpenses}
+          onImportDailyEntries={bulkAddEntries}
+          onImportGoals={bulkAddGoals}
+          onImportSettings={updateSettings}
+          existingExpenses={expenses}
+        />
       )}
     </div>
   );

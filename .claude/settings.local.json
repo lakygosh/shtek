@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(where gh:*)"
+      "Bash(where gh:*)",
+      "Bash(where vercel:*)",
+      "Bash(npx vercel:*)",
+      "Bash(vercel whoami:*)",
+      "Bash(vercel link:*)",
+      "Bash(vercel --yes)",
+      "Bash(vercel domains:*)",
+      "Bash(npx vite:*)"
     ]
   }
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabase";
+import { DEFAULT_EXPENSES, DEFAULT_IDEAL, DEFAULT_GOALS, getDefaultDailyEntries } from "../data/defaults";
 
 // ── User Settings ──
 export function useSettings(userId) {
@@ -129,7 +130,30 @@ export function useGoals(userId) {
     await supabase.from("goals").delete().eq("id", id);
   }, []);
 
-  return { goals, loading, addGoal, updateGoal, deleteGoal };
+  const bulkAddGoals = useCallback(async (newGoals, onProgress) => {
+    const rows = newGoals.map((g, i) => ({
+      user_id: userId,
+      template: g.template || "simple",
+      name: g.name || "Goal",
+      icon: g.icon || "🎯",
+      target_amount: g.target_amount || 0,
+      current_savings: g.current_savings || 0,
+      monthly_contribution: g.monthly_contribution || 0,
+      deadline: g.deadline || null,
+      extra: g.extra || {},
+      sort_order: i,
+      is_archived: false,
+    }));
+    const chunkSize = 500;
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      const chunk = rows.slice(i, i + chunkSize);
+      const { data } = await supabase.from("goals").insert(chunk).select();
+      if (data) setGoals(prev => [...prev, ...data]);
+      if (onProgress) onProgress(Math.min(i + chunkSize, rows.length));
+    }
+  }, [userId]);
+
+  return { goals, loading, addGoal, bulkAddGoals, updateGoal, deleteGoal };
 }
 
 // ── Feedback ──
@@ -222,5 +246,79 @@ export function useDailyEntries(userId) {
     await supabase.from("daily_entries").delete().eq("id", id);
   }, []);
 
-  return { entries, loading, addEntry, updateEntry, deleteEntry };
+  const bulkAddEntries = useCallback(async (newEntries, onProgress) => {
+    const rows = newEntries.map(e => ({
+      user_id: userId,
+      date: e.date,
+      amount: e.amount,
+      category: e.category,
+      description: e.description || "",
+    }));
+    const chunkSize = 500;
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      const chunk = rows.slice(i, i + chunkSize);
+      const { data } = await supabase.from("daily_entries").insert(chunk).select();
+      if (data) setEntries(prev => [...data, ...prev]);
+      if (onProgress) onProgress(Math.min(i + chunkSize, rows.length));
+    }
+  }, [userId]);
+
+  return { entries, loading, addEntry, bulkAddEntries, updateEntry, deleteEntry };
+}
+
+// ── Seed defaults for brand-new users ──
+export async function seedDefaultData(userId) {
+  // Insert default budget expenses
+  const budgetRows = DEFAULT_EXPENSES.map((item, i) => ({
+    user_id: userId,
+    name: item.name,
+    category: item.category,
+    priority: item.priority,
+    amount: item.amount,
+    frequency: item.frequency,
+    notes: item.notes || "",
+    sort_order: i,
+    is_ideal: false,
+  }));
+  await supabase.from("expenses").insert(budgetRows);
+
+  // Insert default ideal life expenses
+  const idealRows = DEFAULT_IDEAL.map((item, i) => ({
+    user_id: userId,
+    name: item.name,
+    category: item.category,
+    priority: item.priority,
+    amount: item.amount,
+    frequency: item.frequency,
+    notes: item.notes || "",
+    sort_order: i,
+    is_ideal: true,
+  }));
+  await supabase.from("expenses").insert(idealRows);
+
+  // Insert default goals
+  const goalRows = DEFAULT_GOALS.map((g, i) => ({
+    user_id: userId,
+    template: g.template,
+    name: g.name,
+    icon: g.icon,
+    target_amount: g.target_amount,
+    current_savings: g.current_savings,
+    monthly_contribution: g.monthly_contribution,
+    deadline: g.deadline,
+    extra: g.extra,
+    sort_order: i,
+    is_archived: false,
+  }));
+  await supabase.from("goals").insert(goalRows);
+
+  // Insert sample daily entries
+  const dailyRows = getDefaultDailyEntries().map((e) => ({
+    user_id: userId,
+    date: e.date,
+    amount: e.amount,
+    category: e.category,
+    description: e.description,
+  }));
+  await supabase.from("daily_entries").insert(dailyRows);
 }
