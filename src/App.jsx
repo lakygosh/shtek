@@ -284,7 +284,7 @@ function AppContent({ user, onSignOut }) {
             <div style={{ fontSize: 18, fontWeight: 600, color: "#e8e4de", marginBottom: 4 }}>Daily Expense Log</div>
             <div style={{ fontSize: 12, color: "#888", marginBottom: 16 }}>Record every purchase. Tap an entry to edit it.</div>
             <DailyLog entries={dailyEntries} addEntry={addEntry} updateEntry={updateEntry} deleteEntry={deleteEntry}
-              catNames={catNames} catColors={catColors} />
+              catNames={catNames} catColors={catColors} budgetExpenses={expenses} />
           </div>
         )}
 

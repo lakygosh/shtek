@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { toEur, toRsd } from "../data/constants";
+import { toEur, toRsd, monthCost } from "../data/constants";
 import { Card } from "./ui";
 import DonutChart from "./DonutChart";
 
@@ -214,7 +214,78 @@ function DayGroup({ date, entries, catNames, catColors, onEdit, onUpdate, onDele
   );
 }
 
-export default function DailyLog({ entries, addEntry, updateEntry, deleteEntry, catNames, catColors }) {
+function BudgetRemaining({ budgetByCategory, spentByCategory, budgetTotal, catColors }) {
+  const [showUnbudgeted, setShowUnbudgeted] = useState(false);
+  const totalSpent = Object.values(spentByCategory).reduce((s, v) => s + v, 0);
+  const budgetCats = Object.keys(budgetByCategory).sort((a, b) => budgetByCategory[b] - budgetByCategory[a]);
+  const unbudgetedCats = Object.keys(spentByCategory).filter(c => !budgetByCategory[c]).sort((a, b) => spentByCategory[b] - spentByCategory[a]);
+  const unbudgetedTotal = unbudgetedCats.reduce((s, c) => s + spentByCategory[c], 0);
+
+  return (
+    <Card>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <h3 style={{ margin: 0, fontSize: 11, color: "#666", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>Budget</h3>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+          <span style={{
+            fontSize: 16, fontWeight: 700, fontFamily: "'DM Mono', monospace",
+            color: totalSpent > budgetTotal ? "#D49A9A" : totalSpent === budgetTotal ? "#c5bfb5" : "#8FB996",
+          }}>€{totalSpent.toFixed(0)}</span>
+          <span style={{ fontSize: 10, color: "#555" }}>/ €{budgetTotal.toFixed(0)}</span>
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        {budgetCats.map(cat => {
+          const budget = budgetByCategory[cat];
+          const spent = spentByCategory[cat] || 0;
+          const pct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
+          const over = spent > budget;
+          const exact = spent === budget;
+          return (
+            <div key={cat} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: 2, background: catColors[cat] || "#666", flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: "#999", width: 70, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flexShrink: 0 }}>{cat}</span>
+              <div style={{ flex: 1, height: 3, borderRadius: 2, background: "#2a2520", overflow: "hidden" }}>
+                <div style={{
+                  height: "100%", borderRadius: 2, width: `${pct}%`,
+                  background: exact ? "#c5bfb5" : over ? "#D49A9A" : pct > 80 ? "#D4C5A9" : "#8FB996",
+                  transition: "width 0.3s",
+                }} />
+              </div>
+              <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", flexShrink: 0, width: 72, textAlign: "right" }}>
+                <span style={{ color: exact ? "#c5bfb5" : over ? "#D49A9A" : "#8FB996" }}>€{spent.toFixed(0)}</span>
+                <span style={{ color: "#444" }}>/€{budget.toFixed(0)}</span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {unbudgetedCats.length > 0 && (
+        <div style={{ marginTop: 6, borderTop: "1px solid #2a2520", paddingTop: 4 }}>
+          <button onClick={() => setShowUnbudgeted(v => !v)} style={{
+            background: "none", border: "none", color: "#D4C5A9", fontSize: 10, cursor: "pointer",
+            padding: 0, display: "flex", alignItems: "center", gap: 4,
+          }}>
+            <span style={{ fontSize: 8 }}>{showUnbudgeted ? "▼" : "▶"}</span>
+            {unbudgetedCats.length} unbudgeted ({`€${unbudgetedTotal.toFixed(0)}`})
+          </button>
+          {showUnbudgeted && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: 4 }}>
+              {unbudgetedCats.map(cat => (
+                <div key={cat} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: 2, background: catColors[cat] || "#666", flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, color: "#999", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cat}</span>
+                  <span style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#D4C5A9", flexShrink: 0 }}>€{spentByCategory[cat].toFixed(0)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+export default function DailyLog({ entries, addEntry, updateEntry, deleteEntry, catNames, catColors, budgetExpenses = [] }) {
   const [filterMonth, setFilterMonth] = useState(today().slice(0, 7));
   const [filterCategory, setFilterCategory] = useState("All");
   const [editingId, setEditingId] = useState(null);
@@ -235,6 +306,29 @@ export default function DailyLog({ entries, addEntry, updateEntry, deleteEntry, 
     const weekTotal = weekEntries.reduce((s, e) => s + e.amount, 0);
     return { todayTotal, weekTotal, monthTotal, dailyAvg };
   }, [entries]);
+
+  const budgetByCategory = useMemo(() => {
+    const map = {};
+    for (const item of budgetExpenses) {
+      const mc = monthCost(item.amount, item.frequency);
+      map[item.category] = (map[item.category] || 0) + mc;
+    }
+    return map;
+  }, [budgetExpenses]);
+
+  const spentByCategory = useMemo(() => {
+    const currentMonth = today().slice(0, 7);
+    const map = {};
+    for (const e of entries) {
+      if (e.date.startsWith(currentMonth)) {
+        map[e.category] = (map[e.category] || 0) + e.amount;
+      }
+    }
+    return map;
+  }, [entries]);
+
+  const budgetTotal = Object.values(budgetByCategory).reduce((s, v) => s + v, 0);
+  const hasBudget = budgetTotal > 0;
 
   const filtered = useMemo(() => {
     return entries
@@ -294,6 +388,8 @@ export default function DailyLog({ entries, addEntry, updateEntry, deleteEntry, 
           </div>
         </div>
       </Card>
+
+      {hasBudget && <BudgetRemaining budgetByCategory={budgetByCategory} spentByCategory={spentByCategory} budgetTotal={budgetTotal} catColors={catColors} />}
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}
