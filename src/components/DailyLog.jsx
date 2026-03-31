@@ -317,15 +317,14 @@ export default function DailyLog({ entries, addEntry, updateEntry, deleteEntry, 
   }, [budgetExpenses]);
 
   const spentByCategory = useMemo(() => {
-    const currentMonth = today().slice(0, 7);
     const map = {};
     for (const e of entries) {
-      if (e.date.startsWith(currentMonth)) {
+      if (e.date.startsWith(filterMonth)) {
         map[e.category] = (map[e.category] || 0) + e.amount;
       }
     }
     return map;
-  }, [entries]);
+  }, [entries, filterMonth]);
 
   const budgetTotal = Object.values(budgetByCategory).reduce((s, v) => s + v, 0);
   const hasBudget = budgetTotal > 0;
